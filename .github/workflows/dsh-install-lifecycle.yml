@@ -29,7 +29,6 @@ jobs:
           - npm
           - github
     env:
-      DSH_HOME: ${{ runner.temp }}/dsh-home-${{ matrix.source }}
       DSH_VERSION: ${{ github.event.inputs.dsh_version || vars.DSH_VERSION || 'latest' }}
       GITHUB_PLUGIN_REPOSITORY: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
       GITHUB_PLUGIN_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -43,6 +42,10 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
+
+      - name: Configure isolated DSH home
+        shell: bash
+        run: echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-${{ matrix.source }}" >> "${GITHUB_ENV}"
 
       - name: Install selected DSH version
         shell: bash
