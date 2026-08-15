@@ -9,9 +9,178 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+env:
+  DSH_VERSION: ${{ vars.DSH_VERSION || 'latest' }}
+
 jobs:
+  test-tarball:
+    name: Test packed release artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version v${package_version}."
+            exit 1
+          fi
+          echo "PACKAGE_VERSION=${package_version}" >> "${GITHUB_ENV}"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Pack release artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_tarball="$(npm pack --silent | tail -n 1)"
+          mv "${package_tarball}" package.tgz
+          npm pack --dry-run
+
+      - name: Install DSH test prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@10
+          npm install --global "@deepseek-ai/dsh@${DSH_VERSION}"
+          echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-tarball" >> "${GITHUB_ENV}"
+
+      - name: Test packed artifact lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin_spec="${GITHUB_WORKSPACE}/package.tgz"
+          dsh plugin --profile web add -w "${plugin_spec}"
+          node scripts/verify-dsh-install.mjs installed tarball "${plugin_spec}" "${PACKAGE_VERSION}"
+          dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+          node scripts/verify-dsh-install.mjs uninstalled tarball "${plugin_spec}" "${PACKAGE_VERSION}"
+
+      - name: Upload tested release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: package.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  test-github:
+    name: Test current GitHub tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install DSH test prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@10
+          npm install --global "@deepseek-ai/dsh@${DSH_VERSION}"
+          echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-github" >> "${GITHUB_ENV}"
+
+      - name: Test current GitHub tag lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_version="$(node -p "require('./package.json').version")"
+          plugin_spec="github:${GITHUB_REPOSITORY}#${GITHUB_SHA}"
+          dsh plugin --profile web add -w "${plugin_spec}"
+          node scripts/verify-dsh-install.mjs installed github "${plugin_spec}" "${package_version}"
+          dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+          node scripts/verify-dsh-install.mjs uninstalled github "${plugin_spec}" "${package_version}"
+
+  test-npm-latest:
+    name: Test npm latest release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install DSH test prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@10
+          npm install --global "@deepseek-ai/dsh@${DSH_VERSION}"
+          echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-npm-latest" >> "${GITHUB_ENV}"
+
+      - name: Test npm latest lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin_spec="@wnjxyk/dsh-codex-oauth@latest"
+          dsh plugin --profile web add -w "${plugin_spec}"
+          node scripts/verify-dsh-install.mjs installed npm "${plugin_spec}"
+          dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+          node scripts/verify-dsh-install.mjs uninstalled npm "${plugin_spec}"
+
   publish:
-    name: Publish package
+    name: Publish tested artifact
+    needs:
+      - test-tarball
+      - test-github
+      - test-npm-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+
+      - name: Download tested release artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: npm-package
+
+      - name: Publish tested artifact
+        run: npm publish package.tgz
+
+  verify-published:
+    name: Verify published npm version
+    needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -26,21 +195,40 @@ jobs:
           registry-url: https://registry.npmjs.org/
           package-manager-cache: false
 
-      - name: Verify tag matches package version
+      - name: Install DSH test prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@10
+          npm install --global "@deepseek-ai/dsh@${DSH_VERSION}"
+          echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-published" >> "${GITHUB_ENV}"
+
+      - name: Wait for published version
         shell: bash
         run: |
           set -euo pipefail
           package_version="$(node -p "require('./package.json').version")"
-          if [[ "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match package version v${package_version}."
-            exit 1
-          fi
+          plugin_spec="@wnjxyk/dsh-codex-oauth@${package_version}"
+          for attempt in {1..12}; do
+            published_version="$(npm view "${plugin_spec}" version 2>/dev/null || true)"
+            if [[ "${published_version}" == "${package_version}" ]]; then
+              echo "PACKAGE_VERSION=${package_version}" >> "${GITHUB_ENV}"
+              echo "PLUGIN_SPEC=${plugin_spec}" >> "${GITHUB_ENV}"
+              exit 0
+            fi
+            if [[ "${attempt}" -eq 12 ]]; then
+              echo "${plugin_spec} did not become available from npm in time."
+              exit 1
+            fi
+            echo "Waiting for ${plugin_spec} to become available (attempt ${attempt}/12)..."
+            sleep 10
+          done
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Publish package
-        run: npm publish
+      - name: Test published npm lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          dsh plugin --profile web add -w "${PLUGIN_SPEC}"
+          node scripts/verify-dsh-install.mjs installed npm "${PLUGIN_SPEC}" "${PACKAGE_VERSION}"
+          dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+          node scripts/verify-dsh-install.mjs uninstalled npm "${PLUGIN_SPEC}" "${PACKAGE_VERSION}"

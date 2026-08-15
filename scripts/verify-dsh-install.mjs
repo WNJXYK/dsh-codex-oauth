@@ -3,12 +3,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const PACKAGE_NAME = "@wnjxyk/dsh-codex-oauth";
-const [state, source, requestedSpec] = process.argv.slice(2);
+const [state, source, requestedSpec, expectedVersion] = process.argv.slice(2);
 const dshHome = process.env.DSH_HOME;
 
 assert.ok(dshHome, "DSH_HOME must point at the isolated test home");
 assert.ok(["installed", "uninstalled"].includes(state), `unknown state: ${state}`);
-assert.ok(["npm", "github"].includes(source), `unknown source: ${source}`);
+assert.ok(["npm", "github", "tarball"].includes(source), `unknown source: ${source}`);
 
 const profileRoot = join(dshHome, "profiles", "web");
 const profilePath = join(profileRoot, "package.json");
@@ -32,16 +32,21 @@ if (state === "installed") {
 
   if (source === "npm") {
     assert.ok(!dependency.includes("github:"), `npm install resolved to ${dependency}`);
-  } else {
+  } else if (source === "github") {
     assert.ok(
       dependency.includes("github:") || dependency.startsWith("git+"),
       `GitHub install resolved to ${dependency}`,
     );
+  } else {
+    assert.match(dependency, /\.tgz(?:$|[#?])/u, `tarball install resolved to ${dependency}`);
   }
 
   const installedPackage = JSON.parse(readFileSync(installedPackagePath, "utf8"));
   assert.equal(installedPackage.name, PACKAGE_NAME);
   assert.match(installedPackage.version, /^\d+\.\d+\.\d+/u);
+  if (expectedVersion) {
+    assert.equal(installedPackage.version, expectedVersion);
+  }
 
   const installedRoot = join(profileRoot, "node_modules", "@wnjxyk", "dsh-codex-oauth");
   const client = readFileSync(join(installedRoot, "lib", "client.js"), "utf8");
