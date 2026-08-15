@@ -1,0 +1,26 @@
+# dsh-codex-oauth bundle patch.
+# Activate DSH/pi-ai's built-in `openai-codex` LLM provider so GPT models are
+# available in the model picker. The client plugin hides its redundant native
+# settings row; OAuth, quota, and logout stay unified in the subscription card.
+
+- id: llm-pi-ai
+  config:
+    providers:
+      openai-codex:
+        apiKeyEnv: DSH_OPENAI_CODEX_TOKEN
+
+# Keep DSH's native `web_search` tool and route its provider seam through the
+# signed-in ChatGPT/Codex subscription supplied by this package.
+- id: web
+  config:
+    searchProvider: openai-codex
+
+- insert:
+    - id: dsh-codex-oauth
+      name: "@wnjxyk/dsh-codex-oauth"
+
+    - id: codex-web-search
+      name: "@wnjxyk/dsh-codex-oauth/web-search"
+
+    - id: codex-image-tool
+      name: "@wnjxyk/dsh-codex-oauth/image-tool"

@@ -1,0 +1,75 @@
+{
+  "name": "@wnjxyk/dsh-codex-oauth",
+  "description": "Unified OpenAI Codex subscription plugin for DeepSeek Harness: GPT models, OAuth, quota, image generation, and web search.",
+  "version": "0.4.0",
+  "author": "WNJXYK",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WNJXYK/dsh-codex-oauth.git"
+  },
+  "homepage": "https://github.com/WNJXYK/dsh-codex-oauth#readme",
+  "bugs": {
+    "url": "https://github.com/WNJXYK/dsh-codex-oauth/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "openai",
+    "codex",
+    "oauth",
+    "subscription"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js",
+    "./image-tool": "./lib/image-tool.js",
+    "./web-search": "./lib/web-search.js"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "LICENSE",
+    "README.md",
+    "README.zh.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-tool"
+      ],
+      "platform": "web"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-atomic-write": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-credentials": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-attachment": "^0.1.0-rc.6"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node scripts/smoke.mjs && node scripts/tools.mjs"
+  }
+}

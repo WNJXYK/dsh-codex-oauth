@@ -1,0 +1,8 @@
+node_modules/
+*.tgz
+.env
+.env.*
+codex-oauth.json
+codex-oauth-preferences.json
+npm-debug.log*
+

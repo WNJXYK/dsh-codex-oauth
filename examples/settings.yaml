@@ -1,0 +1,7 @@
+# Example user-settings section for dsh-codex-oauth.
+# After logging in (http://127.0.0.1:1456/start or /start-device), route new
+# agents to the pi-ai built-in openai-codex provider.
+
+agent-default-model:
+  provider: openai-codex
+  model: gpt-5.5
