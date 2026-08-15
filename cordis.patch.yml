@@ -9,11 +9,9 @@
       openai-codex:
         apiKeyEnv: DSH_OPENAI_CODEX_TOKEN
 
-# Keep DSH's native `web_search` tool and route its provider seam through the
-# signed-in ChatGPT/Codex subscription supplied by this package.
-- id: web
-  config:
-    searchProvider: openai-codex
+# Search routing is selected live by the `codex-web-search` plugin. Do not pin
+# `web.searchProvider` here: when the subscription search switch is off, DSH
+# must retain its own configured provider (normally `deepseek-official`).
 
 - insert:
     - id: dsh-codex-oauth

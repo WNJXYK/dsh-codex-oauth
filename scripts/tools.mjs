@@ -115,7 +115,7 @@ let searchEnabled = true;
 let searchWatcher;
 let searchRegisters = 0;
 let searchDisposes = 0;
-searchApply({
+const searchContext = {
 	effect(callback) {
 		this.cleanup = callback();
 		return this.cleanup;
@@ -130,19 +130,100 @@ searchApply({
 		},
 	},
 	web: {
+		searchProviderId: "deepseek-official",
 		registerSearchProvider() {
 			searchRegisters += 1;
 			return () => { searchDisposes += 1; };
 		},
 	},
-});
+};
+searchApply(searchContext);
 assert.equal(searchRegisters, 1);
+assert.equal(searchContext.web.searchProviderId, CODEX_SEARCH_PROVIDER_ID);
 searchEnabled = false;
 searchWatcher();
-assert.equal(searchDisposes, 1);
+assert.equal(searchContext.web.searchProviderId, "deepseek-official");
+assert.equal(searchDisposes, 0);
 searchEnabled = true;
 searchWatcher();
-assert.equal(searchRegisters, 2);
+assert.equal(searchContext.web.searchProviderId, CODEX_SEARCH_PROVIDER_ID);
+assert.equal(searchRegisters, 1);
+searchContext.cleanup();
+assert.equal(searchContext.web.searchProviderId, "deepseek-official");
+assert.equal(searchDisposes, 1);
+searchContext.cleanup();
+assert.equal(searchDisposes, 1);
+
+searchEnabled = false;
+const customSearchContext = {
+	effect(callback) {
+		this.cleanup = callback();
+		return this.cleanup;
+	},
+	openaiCodexAuth: {
+		featureEnabled() {
+			return searchEnabled;
+		},
+		watchPreferences(callback) {
+			searchWatcher = callback;
+			return () => {};
+		},
+	},
+	web: {
+		searchProviderId: "custom-search",
+		registerSearchProvider() {
+			return () => {};
+		},
+	},
+};
+searchApply(customSearchContext);
+assert.equal(customSearchContext.web.searchProviderId, "custom-search");
+searchEnabled = true;
+searchWatcher();
+assert.equal(customSearchContext.web.searchProviderId, CODEX_SEARCH_PROVIDER_ID);
+customSearchContext.web.searchProviderId = "replacement-search";
+searchEnabled = false;
+searchWatcher();
+assert.equal(customSearchContext.web.searchProviderId, "replacement-search");
+customSearchContext.cleanup();
+assert.equal(customSearchContext.web.searchProviderId, "replacement-search");
+
+searchEnabled = false;
+const legacyCodexSelection = {
+	effect(callback) {
+		this.cleanup = callback();
+		return this.cleanup;
+	},
+	openaiCodexAuth: {
+		featureEnabled() {
+			return searchEnabled;
+		},
+		watchPreferences() {
+			return () => {};
+		},
+	},
+	web: {
+		searchProviderId: CODEX_SEARCH_PROVIDER_ID,
+		registerSearchProvider() {
+			return () => {};
+		},
+	},
+};
+searchApply(legacyCodexSelection);
+assert.equal(legacyCodexSelection.web.searchProviderId, "deepseek-official");
+legacyCodexSelection.cleanup();
+assert.equal(legacyCodexSelection.web.searchProviderId, "deepseek-official");
+
+assert.throws(
+	() => searchApply({
+		effect(callback) {
+			return callback();
+		},
+		openaiCodexAuth: {},
+		web: { registerSearchProvider() {} },
+	}),
+	/does not support live web-search provider selection/u,
+);
 
 console.log("3. SSE parsing and image extraction");
 const imageEvents = parseSseText(
@@ -347,8 +428,8 @@ assert.match(bundlePatch, /^\s*-\s+id:\s+llm-pi-ai\s*$/mu);
 assert.match(bundlePatch, /^\s+providers:\s*$/mu);
 assert.match(bundlePatch, /^\s+openai-codex:\s*$/mu);
 assert.match(bundlePatch, /^\s+apiKeyEnv:\s+DSH_OPENAI_CODEX_TOKEN\s*$/mu);
-assert.match(bundlePatch, /^\s+searchProvider:\s+openai-codex\s*$/mu);
+assert.doesNotMatch(bundlePatch, /^\s+searchProvider:\s+openai-codex\s*$/mu);
 assert.match(bundlePatch, /^\s+name:\s+["']@wnjxyk\/dsh-codex-oauth["']\s*$/mu);
-console.log("  ok - GPT models are registered while the generic provider editor is hidden");
+console.log("  ok - GPT models are registered without pinning DSH's default search route");
 
 console.log("\nall 7 tool checks passed");
