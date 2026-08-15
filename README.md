@@ -13,6 +13,72 @@ English | [简体中文](README.zh.md)
 - **🛡️ Host-side credential management** — tokens refresh automatically and are never exposed to the web client or written to `settings.yaml`.
 - **🌗 Native language and theme support** — plugin panels, quota, status, and image previews follow DSH's language setting and its Light, Dark, or System appearance.
 
+## Install
+
+The plugin is published on [npm](https://www.npmjs.com/package/@wnjxyk/dsh-codex-oauth), with its source code available on [GitHub](https://github.com/WNJXYK/dsh-codex-oauth).
+
+### Install the latest npm release
+
+```sh
+dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
+```
+
+### Install the latest repository content from GitHub
+
+```sh
+dsh plugin --profile web add -w github:WNJXYK/dsh-codex-oauth
+```
+
+This command does not pin a branch, tag, or commit. It installs the latest content from the repository's current default branch, making it suitable for trying changes that have not reached npm yet.
+
+Keep the `-w` option so the plugin is installed at the root of the DSH Web profile workspace.
+
+Restart the Web profile after installation. If it is not already running, start it with:
+
+```sh
+dsh --profile web
+```
+
+Open DSH, then follow **Sign in** below to connect your OpenAI subscription.
+
+### Update to the latest version
+
+If you installed from npm, run the npm installation command again:
+
+```sh
+dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
+```
+
+If you installed from GitHub, run the corresponding GitHub installation command again to fetch the latest repository content.
+
+Restart the Web profile after the update.
+
+### DSH compatibility automation
+
+GitHub Actions runs two isolated lifecycle jobs on every push and pull request: one installs the latest npm release, and the other installs the exact GitHub commit being tested. Each job installs DSH, verifies the plugin dependency, bundle, client registration, and composed configuration, then uninstalls the plugin and confirms it was completely removed.
+
+The DSH version is selected in this order:
+
+1. The `dsh_version` input supplied when manually running **DSH install lifecycle**.
+2. The repository Actions variable `DSH_VERSION`.
+3. `latest` when neither value is set.
+
+Set `DSH_VERSION` under **Settings → Secrets and variables → Actions → Variables** to pin automatic push and pull-request checks to a particular release such as `0.1.0-rc.6`. Leave it unset to continuously test compatibility with the newest DSH release.
+
+## Uninstall
+
+1. Sign out from **Settings → Models → OpenAI Codex subscription** to remove the OAuth credential stored on the DSH host.
+2. Stop the currently running Web profile.
+3. Remove the plugin:
+
+```sh
+dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+```
+
+Start the Web profile again and refresh the DSH page. The model provider, image tool, and web-search provider will then be fully unloaded.
+
+> Removing the plugin does not delete `codex-oauth-preferences.json` or DSH attachments such as previously generated images. If you do not sign out first, `codex-oauth.json` also remains on disk. For a complete cleanup, stop DSH and manually remove the corresponding files listed under **Configuration**; use the actual locations if you configured custom paths.
+
 ## Capabilities
 
 | Capability | What the plugin adds |
@@ -23,14 +89,6 @@ English | [简体中文](README.zh.md)
 | Subscription usage | Shows the plan, remaining percentage, reset time, and every quota window returned by the account, automatically identifying 5-hour and weekly windows when present. |
 | OAuth sign-in and renewal | Supports browser PKCE, headless device codes, refresh-token rotation, status refresh, and sign-out. |
 | Native DSH integration | Follows DSH's design and capability model, mounting or unmounting image generation and web search live without a restart. |
-
-## Install
-
-```sh
-dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
-```
-
-Restart the Web profile after installation, then open DSH and continue with **Sign in** below.
 
 ## Sign in
 
@@ -124,18 +182,6 @@ curl -H "Origin: http://127.0.0.1:3080" \
 ```
 
 The response includes login state, account ID, token expiry, normalized quota windows, feature preferences, and any usage error. State-changing endpoints require the current session's CSRF token.
-
-## Uninstall
-
-Before uninstalling, sign out from **Settings → Models → OpenAI Codex subscription** to remove the OAuth credential stored on the DSH host. Then remove the plugin:
-
-```sh
-dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
-```
-
-If the Web profile is running, restart it after removal and refresh the DSH page so the model provider, image tool, and web-search provider are fully unloaded.
-
-Removing the plugin does not delete `codex-oauth-preferences.json` or DSH attachments such as previously generated images. If you do not sign out first, `codex-oauth.json` also remains on disk. For a complete cleanup, stop DSH and manually remove the corresponding files listed under **Configuration**; use the actual locations if you configured custom paths.
 
 ## Security boundaries
 

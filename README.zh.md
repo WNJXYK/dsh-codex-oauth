@@ -13,6 +13,72 @@
 - **🛡️ Host 侧凭据管理**：Token 自动刷新，不会进入 Web 客户端，也不会写入 `settings.yaml`。
 - **🌗 原生语言与主题适配**：插件面板、额度、状态和图片预览会跟随 DSH 的语言设置，以及浅色、深色或跟随系统外观。
 
+## 安装
+
+本插件已发布至 [npm](https://www.npmjs.com/package/@wnjxyk/dsh-codex-oauth)，源代码托管在 [GitHub](https://github.com/WNJXYK/dsh-codex-oauth)。
+
+### 从 npm 安装最新发布版
+
+```sh
+dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
+```
+
+### 从 GitHub 安装仓库最新内容
+
+```sh
+dsh plugin --profile web add -w github:WNJXYK/dsh-codex-oauth
+```
+
+该命令不固定分支、Tag 或 Commit，会安装仓库当前默认分支的最新内容，适合体验尚未发布到 npm 的更新。
+
+请保留 `-w` 参数，确保插件安装到 DSH Web profile 的工作区根目录。
+
+安装完成后，请重启 Web profile；如果尚未运行，可执行：
+
+```sh
+dsh --profile web
+```
+
+打开 DSH 后，按照下方“登录”步骤连接 OpenAI 订阅。
+
+### 更新到最新版本
+
+如果通过 npm 安装，再次执行 npm 安装命令即可更新：
+
+```sh
+dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
+```
+
+如果通过 GitHub 安装，请再次执行对应的 GitHub 安装命令，以获取仓库的最新内容。
+
+更新完成后同样需要重启 Web profile。
+
+### DSH 兼容性自动化
+
+GitHub Actions 会在每次 Push 和 Pull Request 时运行两项相互隔离的生命周期测试：一项安装 npm 最新发布版，另一项安装当前正在测试的 GitHub Commit。每项任务都会安装 DSH，验证插件 dependency、bundle、客户端注册 ID 及组合配置，然后卸载插件并确认相关内容已完全移除。
+
+DSH 版本按以下优先级选择：
+
+1. 手动运行 **DSH install lifecycle** 时填写的 `dsh_version`。
+2. 仓库的 Actions 变量 `DSH_VERSION`。
+3. 两者都未设置时使用 `latest`。
+
+如需固定自动测试版本，请在 **Settings → Secrets and variables → Actions → Variables** 中添加 `DSH_VERSION`，例如 `0.1.0-rc.6`。不设置该变量则会持续测试最新 DSH 版本的兼容性。
+
+## 卸载
+
+1. 在 **设置 → 模型 → OpenAI Codex 订阅**中退出登录，删除 Host 侧保存的 OAuth 凭据。
+2. 停止当前正在运行的 Web profile。
+3. 执行卸载命令：
+
+```sh
+dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+```
+
+卸载后重新启动 Web profile 并刷新 DSH 页面，模型提供方、图片工具和联网搜索提供方即会完全卸载。
+
+> 卸载插件不会删除偏好文件 `codex-oauth-preferences.json`，也不会删除历史生成图片等 DSH 附件。如果卸载前没有退出登录，OAuth 凭据文件 `codex-oauth.json` 也会保留。需要彻底清理时，请在停止 DSH 后手动删除“配置”一节列出的对应文件；如曾自定义路径，请以实际配置为准。
+
 ## 能力一览
 
 | 能力 | 插件提供的内容 |
@@ -23,14 +89,6 @@
 | 订阅用量 | 展示套餐、剩余比例、重置时间，以及账号返回的全部额度窗口；存在时会自动识别 5 小时额度与每周额度。 |
 | OAuth 登录与续期 | 支持浏览器 PKCE、无头设备码、Refresh Token 轮换、状态刷新与退出登录。 |
 | DSH 原生集成 | 遵循 DSH 的原生设计与能力机制，支持实时挂载或卸载图片生成和联网搜索，无需重启。 |
-
-## 安装
-
-```sh
-dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
-```
-
-安装后重启 Web profile，打开 DSH，然后按照下方“登录”步骤连接订阅。
 
 ## 登录
 
@@ -124,18 +182,6 @@ curl -H "Origin: http://127.0.0.1:3080" \
 ```
 
 返回内容包括登录状态、账号 ID、Token 过期时间、标准化额度窗口、功能偏好和用量错误。修改状态的端点需要当前会话的 CSRF Token。
-
-## 卸载
-
-建议先在 **设置 → 模型 → OpenAI Codex 订阅**中退出登录，以删除 Host 侧保存的 OAuth 凭据。然后卸载插件：
-
-```sh
-dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
-```
-
-如果 Web profile 正在运行，请在卸载后重启它并刷新 DSH 页面，使模型提供方、图片工具和联网搜索提供方完全卸载。
-
-卸载插件不会删除偏好文件 `codex-oauth-preferences.json` 或历史生成图片等 DSH 附件。如果卸载前没有退出登录，OAuth 凭据文件 `codex-oauth.json` 也会保留。需要彻底清理时，请在停止 DSH 后手动删除“配置”一节列出的对应文件；如曾自定义路径，请以实际配置为准。
 
 ## 安全边界
 

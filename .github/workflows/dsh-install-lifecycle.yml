@@ -1,0 +1,93 @@
+name: DSH install lifecycle
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dsh_version:
+        description: DSH npm version or tag (for example, latest or 0.1.0-rc.6). Leave blank to use the DSH_VERSION repository variable.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dsh-install-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lifecycle:
+    name: ${{ matrix.source }} source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        source:
+          - npm
+          - github
+    env:
+      DSH_HOME: ${{ runner.temp }}/dsh-home-${{ matrix.source }}
+      DSH_VERSION: ${{ github.event.inputs.dsh_version || vars.DSH_VERSION || 'latest' }}
+      GITHUB_PLUGIN_REPOSITORY: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+      GITHUB_PLUGIN_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install selected DSH version
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global "@deepseek-ai/dsh@${DSH_VERSION}"
+          echo "Installed DSH $(dsh --version) from @deepseek-ai/dsh@${DSH_VERSION}"
+
+      - name: Select plugin source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ matrix.source }}" == "npm" ]]; then
+            plugin_spec="@wnjxyk/dsh-codex-oauth@latest"
+          else
+            plugin_spec="github:${GITHUB_PLUGIN_REPOSITORY}#${GITHUB_PLUGIN_REF}"
+          fi
+          echo "PLUGIN_SPEC=${plugin_spec}" >> "${GITHUB_ENV}"
+          echo "Testing ${plugin_spec}"
+
+      - name: Install plugin
+        shell: bash
+        run: dsh plugin --profile web add -w "${PLUGIN_SPEC}"
+
+      - name: Verify installed state
+        shell: bash
+        run: |
+          node scripts/verify-dsh-install.mjs installed "${{ matrix.source }}" "${PLUGIN_SPEC}"
+          dsh --profile web --dump-config > "${RUNNER_TEMP}/dsh-config-${{ matrix.source }}.yml"
+
+      - name: Uninstall plugin
+        shell: bash
+        run: dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
+
+      - name: Verify uninstalled state
+        shell: bash
+        run: node scripts/verify-dsh-install.mjs uninstalled "${{ matrix.source }}" "${PLUGIN_SPEC}"
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### DSH plugin lifecycle"
+            echo "- Source: ${{ matrix.source }}"
+            echo "- Requested DSH version: ${DSH_VERSION}"
+            echo "- Plugin spec: ${PLUGIN_SPEC:-not selected}"
+          } >> "${GITHUB_STEP_SUMMARY}"
