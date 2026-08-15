@@ -1,7 +1,7 @@
 {
   "name": "@wnjxyk/dsh-codex-oauth",
   "description": "Unified OpenAI Codex subscription plugin for DeepSeek Harness: GPT models, OAuth, quota, image generation, and web search.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "WNJXYK",
   "license": "MIT",
   "repository": {
