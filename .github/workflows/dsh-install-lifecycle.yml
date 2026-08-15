@@ -47,6 +47,10 @@ jobs:
         shell: bash
         run: echo "DSH_HOME=${RUNNER_TEMP}/dsh-home-${{ matrix.source }}" >> "${GITHUB_ENV}"
 
+      - name: Install DSH plugin manager prerequisite
+        shell: bash
+        run: npm install --global pnpm@10
+
       - name: Install selected DSH version
         shell: bash
         run: |
