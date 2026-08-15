@@ -1,196 +1,89 @@
-# DSH-Codex-OAuth
+# 🔐 DSH-Codex-OAuth
 
 English | [简体中文](README.zh.md)
 
-> One ChatGPT / Codex sign-in turns DeepSeek Harness into a complete GPT workspace: use GPT models, GPT Image generation, and OpenAI web search through your OpenAI subscription, with subscription quota always within reach.
+> **🎯 What it does:** Sign in with a ChatGPT / Codex subscription to enjoy powerful GPT models, image generation, and web search in DeepSeek Harness, with subscription quota reporting included.<br>
+> **🧩 Compatibility:** Verified on DSH `0.1.0-rc.6`; future releases will continue to be tested against the latest DSH version.<br>
+> **⚠️ Risk:** This project is built on open-source software and relies on non-public ChatGPT Codex backend endpoints. OpenAI protocol changes may temporarily break features until the plugin is updated, and there may also be a low risk of account suspension.
 
-## ✨ Highlights
+## ✨ Plugin highlights
 
-- **🚀 Use your subscription directly** — after signing in through browser OAuth or a device code, GPT models, image generation, web search, and quota reporting share the same subscription credential.
-- **🧩 Native DSH experience** — GPT models appear directly in the model picker; search results reuse DSH's native source card; generated images are stored as durable attachments with preview, open, and download actions in the tool card.
-- **🎛️ Subscription control center** — choose which GPT models are visible, switch image generation and web search on or off live, inspect plan and quota windows, view reset times, refresh status, or sign out from one panel.
-- **🔑 Multiple authorization flows** — use browser-based PKCE authorization on a local machine or device-code authorization on headless SSH and server environments.
-- **🛡️ Host-side credential management** — tokens refresh automatically and are never exposed to the web client or written to `settings.yaml`.
-- **🌗 Native language and theme support** — plugin panels, quota, status, and image previews follow DSH's language setting and its Light, Dark, or System appearance.
+- **🚀 Direct subscription access** — GPT models, image generation, and web search share your OpenAI subscription quota.
+- **🧩 Controlled integration** — the model picker, generated images, and web search integrate into DeepSeek Harness with dedicated controls.
+- **🔐 Multiple sign-in methods** — supports browser sign-in and headless device-code authorization.
+- **🌗 UI adaptation** — follows DSH's English/Chinese language and Light, Dark, or System theme.
 
-## Install
+## 📦 Install / Upgrade
 
-The plugin is published on [npm](https://www.npmjs.com/package/@wnjxyk/dsh-codex-oauth), with its source code available on [GitHub](https://github.com/WNJXYK/dsh-codex-oauth).
-
-### Install the latest npm release
+### 🟢 [npm](https://www.npmjs.com/package/@wnjxyk/dsh-codex-oauth)
 
 ```sh
 dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
 ```
 
-### Install the latest repository content from GitHub
+### 🐙 [GitHub](https://github.com/WNJXYK/dsh-codex-oauth)
 
 ```sh
 dsh plugin --profile web add -w github:WNJXYK/dsh-codex-oauth
 ```
 
-This command does not pin a branch, tag, or commit. It installs the latest content from the repository's current default branch, making it suitable for trying changes that have not reached npm yet.
+## 🗑️ Uninstall
 
-Keep the `-w` option so the plugin is installed at the root of the DSH Web profile workspace.
-
-Restart the Web profile after installation. If it is not already running, start it with:
-
-```sh
-dsh --profile web
-```
-
-Open DSH, then follow **Sign in** below to connect your OpenAI subscription.
-
-### Update to the latest version
-
-If you installed from npm, run the npm installation command again:
-
-```sh
-dsh plugin --profile web add -w @wnjxyk/dsh-codex-oauth@latest
-```
-
-If you installed from GitHub, run the corresponding GitHub installation command again to fetch the latest repository content.
-
-Restart the Web profile after the update.
-
-### DSH compatibility automation
-
-GitHub Actions runs two isolated lifecycle jobs on every push and pull request: one installs the latest npm release, and the other installs the exact GitHub commit being tested. Each job installs DSH, verifies the plugin dependency, bundle, client registration, and composed configuration, then uninstalls the plugin and confirms it was completely removed.
-
-The DSH version is selected in this order:
-
-1. The `dsh_version` input supplied when manually running **DSH install lifecycle**.
-2. The repository Actions variable `DSH_VERSION`.
-3. `latest` when neither value is set.
-
-Set `DSH_VERSION` under **Settings → Secrets and variables → Actions → Variables** to pin automatic push and pull-request checks to a particular release such as `0.1.0-rc.6`. Leave it unset to continuously test compatibility with the newest DSH release.
-
-## Uninstall
-
-1. Sign out from **Settings → Models → OpenAI Codex subscription** to remove the OAuth credential stored on the DSH host.
-2. Stop the currently running Web profile.
-3. Remove the plugin:
+npm and GitHub installations use the same removal command:
 
 ```sh
 dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
 ```
 
-Start the Web profile again and refresh the DSH page. The model provider, image tool, and web-search provider will then be fully unloaded.
+## 🧰 Plugin capabilities
 
-> Removing the plugin does not delete `codex-oauth-preferences.json` or DSH attachments such as previously generated images. If you do not sign out first, `codex-oauth.json` also remains on disk. For a complete cleanup, stop DSH and manually remove the corresponding files listed under **Configuration**; use the actual locations if you configured custom paths.
-
-## Capabilities
-
-| Capability | What the plugin adds |
+| Capability | Description |
 | --- | --- |
-| GPT models and vision | Activates DSH's built-in `openai-codex` provider and adds the account's available GPT models to the model picker. |
-| Image generation | Registers `generate_image` with square, landscape, and portrait output plus low/medium/high quality; results are saved as DSH attachments with preview, open, and download actions. |
-| Web search | Routes DSH's native `web_search` through hosted GPT search and returns answer text with structured source URLs. |
-| Subscription usage | Shows the plan, remaining percentage, reset time, and every quota window returned by the account, automatically identifying 5-hour and weekly windows when present. |
-| OAuth sign-in and renewal | Supports browser PKCE, headless device codes, refresh-token rotation, status refresh, and sign-out. |
-| Native DSH integration | Follows DSH's design and capability model, mounting or unmounting image generation and web search live without a restart. |
+| 🤖 GPT models | Activates DSH's built-in `openai-codex` provider and dynamically loads models available to the account. |
+| 🎨 Image generation | Registers the `generate_image` tool, supports multiple image sizes and quality levels, and displays the generated result. |
+| 🌐 Web search | Routes native `web_search` through hosted GPT search and returns answer text with structured source URLs. |
+| 📊 Subscription usage | Shows plan, remaining quota, reset times, and windows such as 5-hour and weekly limits. |
+| 🔑 OAuth | Supports browser sign-in, device codes, automatic token renewal, status refresh, and sign-out. |
+| 🖥️ Native integration | Provides model and feature controls, image previews, bilingual copy, and theme adaptation while following DSH's hot-plug design. |
 
-## Sign in
+## ⚙️ Detailed configuration
 
-Open **Settings → Models → OpenAI Codex subscription**, expand **Edit**, and choose either flow below.
+No configuration is normally required. Available options are:
 
-### Browser sign-in
-
-Click **Browser sign in**, or open:
-
-```text
-http://127.0.0.1:1456/start
-```
-
-Authorization takes place on OpenAI's official site. The callback returns to local port `1455`, and the subscription panel updates automatically after sign-in succeeds.
-
-### Device-code sign-in
-
-Click **Headless sign in** in DSH, or request a device code directly from the DSH host:
-
-```sh
-curl http://127.0.0.1:1456/start-device
-# {"url":"https://auth.openai.com/codex/device","userCode":"XXXX-XXXX"}
-```
-
-Open the returned URL on any device and enter `userCode`. Keep DSH running while the plugin polls and completes sign-in automatically.
-
-## Usage
-
-- **Chat with GPT or inspect images:** select an `openai-codex` GPT model in the DSH model picker, then start a conversation or attach an image.
-- **Generate an image:** ask the model to generate, draw, or render an image. It can call `generate_image`; the result is saved as a DSH attachment and displayed in the tool card.
-- **Search the web:** ask for current information or request sources. DSH calls its native `web_search`, while the plugin supplies GPT search results and citations.
-- **Manage available capabilities:** hide models you do not use or disable image generation and web search from the subscription panel. At least one GPT model must remain visible.
-
-Image generation supports `1024x1024`, `1536x1024`, and `1024x1536`; quality can be `low`, `medium`, or `high`, and the background can be `auto` or `opaque`.
-
-## How it works
-
-```text
-OpenAI OAuth (browser PKCE or device code)
-  └─ DSH host: $DSH_HOME/codex-oauth.json
-       ├─ refresh credentials automatically and inject them into the built-in openai-codex provider
-       ├─ call hosted GPT Image and save results through DSH attachments
-       ├─ call hosted GPT web search and map citations to DSH sources
-       └─ fetch subscription usage for the bilingual settings panel
-
-DSH web client
-  └─ receives status, preferences, quota, and attachment references—never tokens
-```
-
-## Configuration
-
-No configuration is normally required. The bundled defaults are:
-
-| Option | Default | Purpose |
+| Option | Default | Description |
 | --- | --- | --- |
+| `dshHome` | DSH Home | Custom DSH home directory used to resolve default file paths. |
 | `path` | `$DSH_HOME/codex-oauth.json` | Host-side OAuth credential file. |
-| `preferencesPath` | `$DSH_HOME/codex-oauth-preferences.json` | Model visibility and feature toggles. If `path` is overridden, this defaults to the same directory. |
-| `issuer` | `https://auth.openai.com` | OAuth issuer; override only when using a gateway or running tests. |
+| `preferencesPath` | `$DSH_HOME/codex-oauth-preferences.json` | Model visibility and feature switches; defaults beside `path` when it is overridden. |
+| `issuer` | `https://auth.openai.com` | OAuth issuer; override only for gateways or tests. |
 | `usageUrl` | `https://chatgpt.com/backend-api/wham/usage` | Subscription usage endpoint. |
-| `controlPort` | `1456` | Loopback login and status service. |
+| `controlPort` | `1456` | Loopback login, status, and preference service. |
 | `redirectPort` | `1455` | Loopback browser OAuth callback. |
-| Search `model` | `gpt-5.4` | Model used by hosted web search. |
+| Search `model` | `gpt-5.6-sol` | Model used by hosted web search, aligned with the default [Codex Power](https://developers.openai.com/codex/models/) configuration. |
 
-Example Cordis entry overrides:
+Example Cordis configuration:
 
 ```yaml
 - insert:
     - id: dsh-codex-oauth
       name: "@wnjxyk/dsh-codex-oauth"
       config:
+        dshHome: /data/dsh
         path: /secure/codex-oauth.json
         preferencesPath: /secure/codex-oauth-preferences.json
+        issuer: https://auth.openai.com
+        usageUrl: https://chatgpt.com/backend-api/wham/usage
         controlPort: 1456
         redirectPort: 1455
 
     - id: codex-web-search
       name: "@wnjxyk/dsh-codex-oauth/web-search"
       config:
-        model: gpt-5.4
+        model: gpt-5.6-sol
 ```
 
-The image tool currently uses `gpt-5.4`. Chat models are discovered dynamically from DSH's built-in provider rather than hard-coded by this plugin.
+Web search and image-generation orchestration both default to the Codex Power model `gpt-5.6-sol`; images are rendered by the hosted GPT Image (`image_generation`) tool; chat models are discovered dynamically from the `openai-codex` model provider supplied by DSH's built-in `llm-pi-ai` plugin.
 
-## Local status endpoint
+## 📄 License
 
-After sign-in, the settings panel refreshes usage every minute. For diagnostics, `/status` accepts only a local browser origin:
-
-```sh
-curl -H "Origin: http://127.0.0.1:3080" \
-  http://127.0.0.1:1456/status
-```
-
-The response includes login state, account ID, token expiry, normalized quota windows, feature preferences, and any usage error. State-changing endpoints require the current session's CSRF token.
-
-## Security boundaries
-
-- Browser authorization uses PKCE and a random `state`; device sign-in uses OpenAI's device authorization flow.
-- Access and refresh tokens stay on the host and are persisted with atomic writes and a file lock; mode `0600` is used on platforms that support POSIX permissions.
-- The control and callback services listen only on `127.0.0.1`.
-- Browser-visible status and preference responses never contain access or refresh tokens.
-- Sign-out and preference writes are CSRF-protected; control responses are non-cacheable and restricted to local web origins.
-
-This is an independent implementation. It does not read `~/.codex/auth.json`, invoke the Codex CLI, or require an OpenAI Platform API key.
-
-License: MIT
+This project is available under the [MIT License](LICENSE), authored by [WNJXYK](http://zhouz.dev/).
