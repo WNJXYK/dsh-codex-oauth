@@ -46,6 +46,12 @@ dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
 | 🔑 OAuth | Supports browser sign-in, device codes, automatic token renewal, status refresh, and sign-out. |
 | 🖥️ Native integration | Provides model and feature controls, image previews, bilingual copy, and theme adaptation while following DSH's hot-plug design. |
 
+## 🖼️ Feature preview
+
+| Account status and model settings | Headless sign-in | Image generation | Web search (X/Twitter) |
+| :---: | :---: | :---: | :---: |
+| ![Account status and model settings](figures/account_status.png) | ![Headless sign-in](figures/headless_login.png) | ![Image generation](figures/image_generation.png) | ![Web search](figures/web_search.png) |
+
 ## ⚙️ Detailed configuration
 
 No configuration is normally required. Available options are:

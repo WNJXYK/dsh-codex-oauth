@@ -46,6 +46,13 @@ dsh plugin --profile web remove -w @wnjxyk/dsh-codex-oauth
 | 🔑 OAuth | 支持浏览器登录、设备码、Token 自动续期、状态刷新和退出登录。 |
 | 🖥️ 原生适配 | 提供模型与功能开关、图片预览、中英文和主题适配，适配 DSH 热插拔系统设计。 |
 
+## 🖼️ 功能预览
+
+| 账号状态与模型配置 | 无头模式登录 | 图片生成 | 联网搜索（检索推特） |
+| :---: | :---: |:---: | :---: |
+| ![账号状态与模型配置](figures/account_status.png) | ![无头模式登录](figures/headless_login.png) |![图片生成](figures/image_generation.png) | ![联网搜索](figures/web_search.png) |
+
+
 ## ⚙️ 详细配置
 
 通常无需配置。默认选项如下：
