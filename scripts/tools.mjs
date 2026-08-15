@@ -9,6 +9,7 @@ import {
 } from "../lib/image-tool.js";
 import {
 	CODEX_SEARCH_PROVIDER_ID,
+	DEFAULT_SEARCH_MODEL,
 	OpenAICodexSearchProvider,
 	apply as searchApply,
 	buildWebSearchRequest,
@@ -29,6 +30,7 @@ console.log("  ok - image and search depend on the registered OAuth service");
 
 console.log("2. request payloads");
 const imageBody = buildImageRequest({ prompt: "draw a cat", quality: "low" });
+assert.equal(imageBody.model, "gpt-5.6-sol");
 assert.deepEqual(imageBody.input, [
 	{
 		role: "user",
@@ -40,6 +42,8 @@ assert.equal(imageBody.tools[0].action, "generate");
 assert.equal(imageBody.tools[0].quality, "low");
 assert.deepEqual(imageBody.tool_choice, { type: "image_generation" });
 const searchBody = buildWebSearchRequest("latest space news");
+assert.equal(DEFAULT_SEARCH_MODEL, "gpt-5.6-sol");
+assert.equal(searchBody.model, DEFAULT_SEARCH_MODEL);
 assert.deepEqual(searchBody.input, buildUserTextInput("latest space news"));
 assert.deepEqual(searchBody.tools, [{ type: "web_search" }]);
 assert.deepEqual(searchBody.tool_choice, { type: "web_search" });
