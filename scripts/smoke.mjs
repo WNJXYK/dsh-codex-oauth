@@ -14,6 +14,20 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 
+const packageJson = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const hostPackages = [
+	"@deepseek-ai/cordis",
+	"@deepseek-ai/dsh-atomic-write",
+	"@deepseek-ai/dsh-attachment",
+	"@deepseek-ai/dsh-credentials",
+	"@deepseek-ai/dsh-home-paths",
+	"@deepseek-ai/dsh-tools",
+];
+for (const name of hostPackages) {
+	assert.equal(packageJson.dependencies?.[name], undefined);
+	assert.equal(typeof packageJson.devDependencies?.[name], "string");
+}
+
 // ---------------------------------------------------------------------------
 // Mock OAuth issuer + usage server
 // ---------------------------------------------------------------------------
